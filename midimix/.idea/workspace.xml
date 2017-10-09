@@ -19,12 +19,12 @@
       <file leaf-file-name="midimixExtension.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/akai/midimixExtension.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="145">
-              <caret line="143" column="0" lean-forward="true" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
+            <state relative-caret-position="464">
+              <caret line="136" column="33" lean-forward="false" selection-start-line="136" selection-start-column="32" selection-end-line="136" selection-end-column="33" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#989#990#0" expanded="true" />
-                <element signature="e#1025#1026#0" expanded="true" />
+                <element signature="e#2368#2369#0" expanded="true" />
+                <element signature="e#2404#2405#0" expanded="true" />
                 <element signature="docComment;method#onMidi0#0;class#midimixExtension#0" expanded="false" />
                 <element signature="method#onSysex0#0;class#midimixExtension#0" expanded="false" />
                 <element signature="method#exit#0;class#midimixExtension#0" expanded="false" />
@@ -48,7 +48,7 @@
         <entry file="file://$PROJECT_DIR$/pom.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="297">
-              <caret line="20" column="41" lean-forward="true" selection-start-line="20" selection-start-column="41" selection-end-line="20" selection-end-column="41" />
+              <caret line="20" column="41" lean-forward="false" selection-start-line="20" selection-start-column="41" selection-end-line="20" selection-end-column="41" />
               <folding />
             </state>
           </provider>
@@ -59,6 +59,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>package com\.akai\;\n\nimport com\.bitwig\.extension\.api\.util\.midi\.ShortMidiMessage\;\nimport com\.bitwig\.extension\.callback\.ShortMidiMessageReceivedCallback\;\nimport com\.bitwig\.extension\.controller\.api\.ControllerHost\;\nimport com\.bitwig\.extension\.controller\.api\.Transport\;\nimport com\.bitwig\.extension\.controller\.ControllerExtension\;\n\npublic class midimixExtension extends ControllerExtension\n\{\n   protected midimixExtension\(final midimixExtensionDefinition definition\, final ControllerHost host\)\n   \{\n      super\(definition\, host\)\;\n   \}\n\n   \@Override\n   public void init\(\)\n   \{\n      final ControllerHost host \= getHost\(\)\;      \n\n      mTransport \= host\.createTransport\(\)\;\n      host\.getMidiInPort\(0\)\.setMidiCallback\(\(ShortMidiMessageReceivedCallback\)msg \-\&gt; onMidi0\(msg\)\)\;\n      host\.getMidiInPort\(0\)\.setSysexCallback\(\(String data\) \-\&gt; onSysex0\(data\)\)\;\n\n      \/\/ TODO\: Perform your driver initialization here\.\n      \/\/ For now just show a popup notification for verification that it is running\.\n      host\.showPopupNotification\(\&quot;midimix Initialized\&quot;\)\;\n   \}\n\n   \@Override\n   public void exit\(\)\n   \{\n      \/\/ TODO\: Perform any cleanup once the driver exits\n      \/\/ For now just show a popup notification for verification that it is no longer running\.\n      getHost\(\)\.showPopupNotification\(\&quot;midimix Exited\&quot;\)\;\n   \}\n\n   \@Override\n   public void flush\(\)\n   \{\n      \/\/ TODO Send any updates you need here\.\n   \}\n\n   \/\*\* Called when we receive short MIDI message on port 0\. \*\/\n   private void onMidi0\(ShortMidiMessage msg\) \n   \{\n      \/\/ TODO\: Implement your MIDI input handling code here\.\n   \}\n   \n   \n\n   \/\*\* Called when we receive sysex MIDI message on port 0\. \*\/\n   private void onSysex0\(final String data\) \n   \{\n      \/\/ MMC Transport Controls\:\n      if \(data\.equals\(\&quot;f07f7f0605f7\&quot;\)\)\n            mTransport\.rewind\(\)\;\n      else if \(data\.equals\(\&quot;f07f7f0604f7\&quot;\)\)\n            mTransport\.fastForward\(\)\;\n      else if \(data\.equals\(\&quot;f07f7f0601f7\&quot;\)\)\n            mTransport\.stop\(\)\;\n      else if \(data\.equals\(\&quot;f07f7f0602f7\&quot;\)\)\n            mTransport\.play\(\)\;\n      else if \(data\.equals\(\&quot;f07f7f0606f7\&quot;\)\)\n            mTransport\.record\(\)\;\n   \}\n\n   private Transport mTransport\;\n\}\n</find>
+      <find>NUM_TRA</find>
     </findStrings>
   </component>
   <component name="GradleLocalSettings">
@@ -150,7 +151,7 @@
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="-7" />
-    <option name="width" value="1561" />
+    <option name="width" value="1760" />
     <option name="height" value="1447" />
   </component>
   <component name="ProjectView">
@@ -233,7 +234,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$/pom.xml" />
-    <property name="settings.editor.selected.configurable" value="editing.templates" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Language Defaults" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -520,8 +521,17 @@
     </task>
     <servers />
   </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="0" width="1561" height="1447" extended-state="0" />
+    <frame x="-7" y="0" width="1760" height="1447" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -540,7 +550,7 @@
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16756175" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32996893" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32919255" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Dynamic Properties" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -578,7 +588,7 @@
     <entry file="file://$PROJECT_DIR$/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="297">
-          <caret line="20" column="41" lean-forward="true" selection-start-line="20" selection-start-column="41" selection-end-line="20" selection-end-column="41" />
+          <caret line="20" column="41" lean-forward="false" selection-start-line="20" selection-start-column="41" selection-end-line="20" selection-end-column="41" />
           <folding />
         </state>
       </provider>
@@ -601,12 +611,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/akai/midimixExtension.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="145">
-          <caret line="143" column="0" lean-forward="true" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
+        <state relative-caret-position="464">
+          <caret line="136" column="33" lean-forward="false" selection-start-line="136" selection-start-column="32" selection-end-line="136" selection-end-column="33" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#989#990#0" expanded="true" />
-            <element signature="e#1025#1026#0" expanded="true" />
+            <element signature="e#2368#2369#0" expanded="true" />
+            <element signature="e#2404#2405#0" expanded="true" />
             <element signature="docComment;method#onMidi0#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#onSysex0#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#exit#0;class#midimixExtension#0" expanded="false" />

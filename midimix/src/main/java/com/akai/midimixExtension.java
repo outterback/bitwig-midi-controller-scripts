@@ -17,12 +17,43 @@ public class midimixExtension extends ControllerExtension {
         super(definition, host);
     }
 
+    private static final int[] midiKeys =
+            { 16, 20, 24, 28, 46, 50, 54, 58,   // cc
+             17, 21, 25, 29, 47, 51, 55, 59,   // .
+             18, 22, 26, 30, 48, 52, 56, 60,   // .
+             1, 4, 7, 10, 13, 16, 19, 22,     // note
+             2, 5, 8, 11, 14, 17, 20, 23,     // .       this is mute + solo
+             3, 6, 9, 12, 15, 18, 21, 24,     // .
+             19, 23, 27, 31, 49, 53, 57, 61,   // cc
+            25, 26, 27};  // BL, BR, Solo  // note
+
+    int[][] a = {{1,2}, {3,4}, {5}, {9, 10, 11}};
+
+    private static final int[][] midiKeys2d =
+                   {{16, 20, 24, 28, 46, 50, 54, 58},   // cc
+                    {17, 21, 25, 29, 47, 51, 55, 59},   // .
+                    {18, 22, 26, 30, 48, 52, 56, 60},   // .
+                    {1, 4, 7, 10, 13, 16, 19, 22},     // note
+                    {2, 5, 8, 11, 14, 17, 20, 23},     // .       this is mute + solo
+                    {3, 6, 9, 12, 15, 18, 21, 24},     // .
+                    {19, 23, 27, 31, 49, 53, 57, 61},   // cc
+                    {25, 26, 27}};  // BL, BR, Solo  // note
+
     private Transport mTransport;
     private TrackBank mTrackBank;
     private int mInternalA = 0;
     private int mInternalB = 0;
-    private BiMap<MidiId, MatrixCoordinate> mBiMap;
+    private BiMap<MidiId, xy> mBiMap;
+    private static final int NOTE_ON = 144;
+    private static final int NOTE_OFF = 128;
+    private static final int CC = 176;
+    private static final int MUTE_ROW = 3;
+    private static final int SOLO_ROW = 4;
+    private static final int REC_ROW  = 5;
+
+
     ControllerFunction[] cf;
+    ControllerFunction[][] cf2d;
 
     double intValTo01(int value) {
         return value / 127.0;
@@ -76,21 +107,63 @@ public class midimixExtension extends ControllerExtension {
 
 
     void scrollChannelsDown() {
+        fixAllLights();
         //getHost().getMidiOutPort().sendMidi(144, data1, msg.getData2());
         mTrackBank.scrollChannelsDown();
     }
 
 
     void scrollChannelsUp() {
+        fixAllLights();
         // getHost().getMidiOutPort().sendMidi(msg.getStatusByte(), msg.getData1(), msg.getData2());
         mTrackBank.scrollChannelsUp();
+    }
+
+
+    void turnOffAllLights() {
+        getHost().println("Fixing Lights");
+        for (int channel = 0; channel < NUM_TRACKS; ++channel) {
+            int velocity = 0;
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[MUTE_ROW][channel], velocity);
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[SOLO_ROW][channel], velocity);
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[REC_ROW][channel], velocity);
+
+
+        }
+    }
+
+
+    void fixAllLights() {
+        getHost().println("Fixing Lights");
+        for (int channel = 0; channel < NUM_TRACKS; ++channel) {
+            int velocity = 0;
+            if (mTrackBank.getChannel(channel).getMute().get()) {
+                velocity = 127;
+            }
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[MUTE_ROW][channel], velocity);
+
+            velocity = 0;
+            if (mTrackBank.getChannel(channel).getSolo().get()) {
+                velocity = 127;
+            }
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[SOLO_ROW][channel], velocity);
+
+            velocity = 0;
+            if (mTrackBank.getChannel(channel).getArm().get()) {
+                velocity = 127;
+            }
+            getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[REC_ROW][channel], velocity);
+
+
+        }
     }
 
     @Override
     public void init() {
 
         final ControllerHost host = getHost();
-
+        host.println("hello ");
+        host.println(a[0][0] + "   " + a[0][1] + "   " + a[1][0] + "   " +  a[0][1] + "   " + a[2][0] + "  " + a[3][2]);
 
         int sendAOffset = 0;
         int sendBOffset = 8;
@@ -116,55 +189,47 @@ public class midimixExtension extends ControllerExtension {
         host.getMidiInPort(0).setMidiCallback((ShortMidiMessageReceivedCallback) msg -> onMidi0(msg));
         host.getMidiInPort(0).setSysexCallback((String data) -> onSysex0(data));
 
-        int[] midiKeys = {16, 20, 24, 28, 46, 50, 54, 58,   // cc
-                17, 21, 25, 29, 47, 51, 55, 59,   // .
-                18, 22, 26, 30, 48, 52, 56, 60,   // .
-                1, 4, 7, 10, 13, 16, 19, 22,     // note
-                2, 5, 8, 11, 14, 17, 20, 23,     // .       this is mute + solo
-                3, 6, 9, 12, 15, 18, 21, 24,     // .
-                19, 23, 27, 31, 49, 53, 57, 61,   // cc
-                25, 26, 27};  // BL, BR, Solo  // note
         cf = new ControllerFunction[64];
+        cf2d = new ControllerFunction[8][8];
 
+        cf2d[7][0] = (val) -> scrollChannelsUp();
+        cf2d[7][1] = (val) -> scrollChannelsDown();
+        mBiMap.put(new MidiId(NOTE_ON, 25), new xy(7, 0));
+        mBiMap.put(new MidiId(NOTE_ON, 26), new xy(7, 1));
 
-        cf[7 * NUM_TRACKS] = (val) -> scrollChannelsUp();
-        cf[7 * NUM_TRACKS + 1] = (val) -> scrollChannelsDown();
-        mBiMap.put(new MidiId(144, 25), new MatrixCoordinate(7, 0));
-        mBiMap.put(new MidiId(144, 26), new MatrixCoordinate(7, 1));
-
-        for (int i = 0; i < NUM_TRACKS; i++) {
-            final int channel = i;
+        for (int y = 0; y < NUM_TRACKS; y++) {
+            final int channel = y;
 
             String stat = "";
 
-            cf[i] = (msg) -> setSend(channel, 0, msg);
-            int index = sendAOffset + i;
+            cf2d[0][y] = (msg) -> setSend(channel, 0, msg);
+            int index = sendAOffset + y;
             stat += "midi[" + index + "]  = " + midiKeys[index];
-            mBiMap.put(new MidiId(176, midiKeys[index]), new MatrixCoordinate(0, i));
+            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(0, y));
 
-            index = sendBOffset + i;
-            cf[NUM_TRACKS + i] = (msg) -> setSend(channel, 1, msg);
-            mBiMap.put(new MidiId(176, midiKeys[index]), new MatrixCoordinate(1, i));
+            index = sendBOffset + y;
+            cf2d[1][y] = (msg) -> setSend(channel, 1, msg);
+            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(1, y));
 
-            index = panOffset + i;
-            cf[NUM_TRACKS * 2 + i] = (msg) -> setPan(channel, msg);
-            mBiMap.put(new MidiId(176, midiKeys[index]), new MatrixCoordinate(2, i));
+            index = panOffset + y;
+            cf2d[2][y] = (ShortMidiMessage msg) -> setPan(channel, msg);
+            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(2, y));
 
-            index = muteOffset + i;
-            cf[NUM_TRACKS * 3 + i] = (msg) -> toggleMute(channel, msg);
-            mBiMap.put(new MidiId(144, midiKeys[index]), new MatrixCoordinate(3, i));
+            index = muteOffset + y;
+            cf2d[3][y] = (ShortMidiMessage msg) -> toggleMute(channel, msg);
+            mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(3, y));
 
-            index = soloOffset + i;
-            cf[NUM_TRACKS * 4 + i] = (msg) -> toggleSolo(channel, msg);
-            mBiMap.put(new MidiId(144, midiKeys[index]), new MatrixCoordinate(4, i));
+            index = soloOffset + y;
+            cf2d[4][y] = (ShortMidiMessage msg) -> toggleSolo(channel, msg);
+            mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(4, y));
 
-            index = recOffset + i;
-            cf[NUM_TRACKS * 5 + i] = (msg) -> toggleRec(channel, msg);
-            mBiMap.put(new MidiId(144, midiKeys[index]), new MatrixCoordinate(5, i));
+            index = recOffset + y;
+            cf2d[5][y] = (ShortMidiMessage msg) -> toggleRec(channel, msg);
+            mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(5, y));
 
-            index = faderOffset + i;
-            cf[NUM_TRACKS * 6 + i] = (msg) -> setVolume(channel, msg);
-            mBiMap.put(new MidiId(176, midiKeys[index]), new MatrixCoordinate(6, i));
+            index = faderOffset + y;
+            cf2d[6][ y] = (ShortMidiMessage msg) -> setVolume(channel, msg);
+            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(6, y));
 
             host.println(stat);
         }
@@ -172,14 +237,11 @@ public class midimixExtension extends ControllerExtension {
 
         Set<MidiId> ks = mBiMap.keySet();
         for (MidiId mi : ks) {
-            MatrixCoordinate x = mBiMap.get(mi);
-            String msg = String.format("%5d %4d  %d %d", mi.status, mi.data1, x.i, x.j);
+            xy x = mBiMap.get(mi);
+            String msg = String.format("%5d %4d  %d %d", mi.status, mi.data1, x.x, x.y);
             host.println(msg);
         }
 
-
-        // TODO: Perform your driver initialization here.
-        // For now just show a popup notification for verification that it is running.
         host.showPopupNotification("midimix Initialized");
         host.println("init() done");
     }
@@ -200,15 +262,20 @@ public class midimixExtension extends ControllerExtension {
         } else {
         }
 
+        if (msg.getData1() == 62) {
+            host.println(" --# { Turning off all lights }");
+            fixAllLights();
+            return;
+        }
         MidiId mi = new MidiId(msg.getStatusByte(), msg.getData1());
-        MatrixCoordinate mc = mBiMap.get(mi);
+        xy mc = mBiMap.get(mi);
         if (mc == null) {
             host.println(
                     String.format("%5s %4d  no mc", mi.status, mi.data1));
         } else {
             host.println(
-                    String.format("%5s %4d  %d %d", mi.status, mi.data1, mc.i, mc.j));
-            ControllerFunction c = cf[NUM_TRACKS * mc.i + mc.j];
+                    String.format("%5s %4d  %d %d", mi.status, mi.data1, mc.x, mc.y));
+            ControllerFunction c = cf2d[mc.x][mc.y];
 
             c.op(msg);
 
@@ -226,11 +293,6 @@ public class midimixExtension extends ControllerExtension {
 
     private interface ControllerFunction {
         void op(ShortMidiMessage msg);
-    }
-
-
-    private enum STATUS {
-        NOTE, CC
     }
 
     private class MidiId {
@@ -261,13 +323,13 @@ public class midimixExtension extends ControllerExtension {
         }
     }
 
-    private class MatrixCoordinate {
-        public final int i;
-        public final int j;
+    private class xy {
+        public final int x;
+        public final int y;
 
-        public MatrixCoordinate(int i, int j) {
-            this.i = i;
-            this.j = j;
+        public xy(int x, int y) {
+            this.x = x;
+            this.y = y;
         }
     }
 
