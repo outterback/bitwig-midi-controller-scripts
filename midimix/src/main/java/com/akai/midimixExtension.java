@@ -2,14 +2,12 @@ package com.akai;
 
 import com.bitwig.extension.api.util.midi.ShortMidiMessage;
 import com.bitwig.extension.callback.ShortMidiMessageReceivedCallback;
-import com.bitwig.extension.controller.api.Channel;
-import com.bitwig.extension.controller.api.ControllerHost;
-import com.bitwig.extension.controller.api.TrackBank;
-import com.bitwig.extension.controller.api.Transport;
+import com.bitwig.extension.controller.api.*;
 import com.bitwig.extension.controller.ControllerExtension;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import javax.naming.ldap.Control;
 import java.util.Set;
 
 public class midimixExtension extends ControllerExtension {
@@ -73,32 +71,33 @@ public class midimixExtension extends ControllerExtension {
     }
 
     void toggleMute(int channel, ShortMidiMessage msg) {
-        Channel c = mTrackBank.getChannel(channel);
+        Track track = mTrackBank.getChannel(channel);
         int midiVal = msg.getData2();
-        if (c.getMute().get()) {
+        if (!track.getMute().get()) {
             midiVal = 0;
         }
         getHost().getMidiOutPort(0).sendMidi(msg.getStatusByte(), msg.getData1(), midiVal);
-        mTrackBank.getChannel(channel).getMute().toggle();
+        track.getMute().toggle();
     }
 
     private void toggleRec(int channel, ShortMidiMessage msg) {
-
+        final Track track = mTrackBank.getChannel(channel);
         int midiVal = msg.getData2();
-        if (mTrackBank.getChannel(channel).getArm().get()) {
+        if (track.getArm().get()) {
             midiVal = 0;
         }
         getHost().getMidiOutPort(0).sendMidi(msg.getStatusByte(), msg.getData1(), midiVal);
-        mTrackBank.getChannel(channel).getArm().toggle();
+        track.getArm().toggle();
     }
 
     private void toggleSolo(int channel, ShortMidiMessage msg) {
         int midiVal = msg.getData2();
-        if (mTrackBank.getChannel(channel).getSolo().get()) {
+        final Track track = mTrackBank.getChannel(channel);
+        if (track.getSolo().get()) {
             midiVal = 0;
         }
         getHost().getMidiOutPort(0).sendMidi(msg.getStatusByte(), msg.getData1(), midiVal);
-        mTrackBank.getChannel(channel).getSolo().toggle();
+        track.getSolo().toggle();
     }
 
     int NUM_TRACKS = 8;
@@ -106,50 +105,67 @@ public class midimixExtension extends ControllerExtension {
     int NUM_SCENES = 0;
 
 
-    void scrollChannelsDown() {
-        fixAllLights();
+    void scrollChannelsDown(ShortMidiMessage msg) {
         //getHost().getMidiOutPort().sendMidi(144, data1, msg.getData2());
-        mTrackBank.scrollChannelsDown();
+        ControllerHost host = getHost();
+        host.println("data1 = " + msg.getData1());
+        if (msg.getStatusByte() == ShortMidiMessage.NOTE_ON) {
+            host.println("down on");
+            mTrackBank.scrollChannelsDown();
+        } else if (msg.getStatusByte() == ShortMidiMessage.NOTE_OFF) {
+            fixAllLights();
+            host.println("down off");
+        }
     }
 
 
-    void scrollChannelsUp() {
-        fixAllLights();
+    void scrollChannelsUp(ShortMidiMessage msg) {
+        ControllerHost host = getHost();
         // getHost().getMidiOutPort().sendMidi(msg.getStatusByte(), msg.getData1(), msg.getData2());
-        mTrackBank.scrollChannelsUp();
+        host.println("data1 = " + msg.getData1());
+        if (msg.getStatusByte() == ShortMidiMessage.NOTE_ON) {
+            host.println("up on");
+            mTrackBank.scrollChannelsUp();
+        } else if (msg.getStatusByte() == ShortMidiMessage.NOTE_OFF) {
+            host.println("up off");
+            fixAllLights();
+        }
+
     }
 
 
     void turnOffAllLights() {
-        getHost().println("Fixing Lights");
-        for (int channel = 0; channel < NUM_TRACKS; ++channel) {
+        getHost().println("Turning off all lights");
+        for (int channel = 0; channel < 8; ++channel) {
             int velocity = 0;
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[MUTE_ROW][channel], velocity);
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[SOLO_ROW][channel], velocity);
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[REC_ROW][channel], velocity);
-
-
         }
     }
 
 
     void fixAllLights() {
-        getHost().println("Fixing Lights");
-        for (int channel = 0; channel < NUM_TRACKS; ++channel) {
+        ControllerHost host = getHost();
+        host.println("Fixing Lights");
+        for (int channel = 0; channel < 8; ++channel) {
             int velocity = 0;
-            if (mTrackBank.getChannel(channel).getMute().get()) {
+            final Track track = mTrackBank.getChannel(channel);
+            host.println("channel: " + channel + " mute: " + track.getMute().get() + " solo: " + track.getSolo().get() + " arm: " + track.getArm().get());
+            if (!track.getMute().get()) {
                 velocity = 127;
             }
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[MUTE_ROW][channel], velocity);
 
             velocity = 0;
-            if (mTrackBank.getChannel(channel).getSolo().get()) {
+            if (track.getSolo().get()) {
+
                 velocity = 127;
             }
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[SOLO_ROW][channel], velocity);
 
             velocity = 0;
-            if (mTrackBank.getChannel(channel).getArm().get()) {
+            if (track.getArm().get()) {
                 velocity = 127;
             }
             getHost().getMidiOutPort(0).sendMidi(144, midiKeys2d[REC_ROW][channel], velocity);
@@ -163,8 +179,6 @@ public class midimixExtension extends ControllerExtension {
 
         final ControllerHost host = getHost();
         host.println("hello ");
-        host.println(a[0][0] + "   " + a[0][1] + "   " + a[1][0] + "   " +  a[0][1] + "   " + a[2][0] + "  " + a[3][2]);
-
         int sendAOffset = 0;
         int sendBOffset = 8;
         int panOffset = 16;
@@ -192,58 +206,58 @@ public class midimixExtension extends ControllerExtension {
         cf = new ControllerFunction[64];
         cf2d = new ControllerFunction[8][8];
 
-        cf2d[7][0] = (val) -> scrollChannelsUp();
-        cf2d[7][1] = (val) -> scrollChannelsDown();
+        cf2d[7][0] = (msg) -> scrollChannelsUp(msg);
+        cf2d[7][1] = (msg) -> scrollChannelsDown(msg);
         mBiMap.put(new MidiId(NOTE_ON, 25), new xy(7, 0));
+        mBiMap.put(new MidiId(NOTE_OFF, 25), new xy(7, 0));
+
         mBiMap.put(new MidiId(NOTE_ON, 26), new xy(7, 1));
+        mBiMap.put(new MidiId(NOTE_OFF, 26), new xy(7, 1));
 
         for (int y = 0; y < NUM_TRACKS; y++) {
             final int channel = y;
 
-            String stat = "";
-
             cf2d[0][y] = (msg) -> setSend(channel, 0, msg);
             int index = sendAOffset + y;
-            stat += "midi[" + index + "]  = " + midiKeys[index];
-            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(0, y));
+            mBiMap.put(new MidiId(CC, midiKeys2d[0][y]), new xy(0, y));
 
             index = sendBOffset + y;
             cf2d[1][y] = (msg) -> setSend(channel, 1, msg);
-            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(1, y));
+            mBiMap.put(new MidiId(CC, midiKeys2d[1][y]), new xy(1, y));
 
             index = panOffset + y;
             cf2d[2][y] = (ShortMidiMessage msg) -> setPan(channel, msg);
-            mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(2, y));
+            mBiMap.put(new MidiId(CC, midiKeys2d[2][y]), new xy(2, y));
 
             index = muteOffset + y;
             cf2d[3][y] = (ShortMidiMessage msg) -> toggleMute(channel, msg);
-            mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(3, y));
+            mBiMap.put(new MidiId(NOTE_ON, midiKeys2d[3][y]), new xy(3, y));
+            //mBiMap.put(new MidiId(NOTE_OFF, midiKeys[index]), new xy(3, y));
 
             index = soloOffset + y;
             cf2d[4][y] = (ShortMidiMessage msg) -> toggleSolo(channel, msg);
             mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(4, y));
+            //mBiMap.put(new MidiId(NOTE_OFF, midiKeys[index]), new xy(4, y));
 
             index = recOffset + y;
             cf2d[5][y] = (ShortMidiMessage msg) -> toggleRec(channel, msg);
             mBiMap.put(new MidiId(NOTE_ON, midiKeys[index]), new xy(5, y));
+            //mBiMap.put(new MidiId(NOTE_OFF, midiKeys[index]), new xy(5, y));
+
 
             index = faderOffset + y;
             cf2d[6][ y] = (ShortMidiMessage msg) -> setVolume(channel, msg);
             mBiMap.put(new MidiId(CC, midiKeys[index]), new xy(6, y));
-
-            host.println(stat);
-        }
-
-
-        Set<MidiId> ks = mBiMap.keySet();
-        for (MidiId mi : ks) {
-            xy x = mBiMap.get(mi);
-            String msg = String.format("%5d %4d  %d %d", mi.status, mi.data1, x.x, x.y);
-            host.println(msg);
         }
 
         host.showPopupNotification("midimix Initialized");
         host.println("init() done");
+        host.println("ok that was fun");
+
+        host.println("Fixing");
+        fixAllLights();
+
+
     }
 
     /**
@@ -251,11 +265,10 @@ public class midimixExtension extends ControllerExtension {
      */
     private void onMidi0(ShortMidiMessage msg) {
         final ControllerHost host = getHost();
-
         String msgType = "other (pb, press, pc)";
         if (msg.isNoteOn() || msg.isNoteOff()) {
 
-            host.getMidiOutPort(0).sendMidi(msg.getStatusByte(), msg.getData1(), msg.getData2());
+            //host.getMidiOutPort(0).sendMidi(msg.getStatusByte(), msg.getData1(), msg.getData2());
             msgType = "note";
         } else if (msg.isControlChange()) {
             msgType = "cc";
@@ -264,6 +277,10 @@ public class midimixExtension extends ControllerExtension {
 
         if (msg.getData1() == 62) {
             host.println(" --# { Turning off all lights }");
+            turnOffAllLights();
+            return;
+        } else if (msg.getData1() == 27) {
+            host.println(" --# { Fixing all lights }");
             fixAllLights();
             return;
         }
@@ -354,6 +371,7 @@ public class midimixExtension extends ControllerExtension {
     public void exit() {
         // TODO: Perform any cleanup once the driver exits
         // For now just show a popup notification for verification that it is no longer running.
+        turnOffAllLights();
         getHost().showPopupNotification("midimix Exited");
     }
 

@@ -58,7 +58,7 @@
                         </goals>
                         <configuration>
                             <sourceFile>${project.build.directory}/${project.build.finalName}.jar</sourceFile>
-                            <destinationFile>${project.build.directory}/midimix.bwextension</destinationFile>
+                            <destinationFile>C:\\Users\\Oscar\\Documents\\Bitwig Studio\\Extensions\\midimix.bwextension</destinationFile>
                         </configuration>
                     </execution>
                 </executions>
