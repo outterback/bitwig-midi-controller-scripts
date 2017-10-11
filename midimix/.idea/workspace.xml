@@ -15,16 +15,18 @@
     <favorites_list name="midimix" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.49977118">
+    <splitter split-orientation="horizontal" split-proportion="0.57254004">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
           <file leaf-file-name="midimixExtension.java" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/main/java/com/akai/midimixExtension.java">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="798">
-                  <caret line="172" column="0" lean-forward="true" selection-start-line="172" selection-start-column="0" selection-end-line="172" selection-end-column="0" />
+                <state relative-caret-position="1668">
+                  <caret line="136" column="28" lean-forward="false" selection-start-line="136" selection-start-column="28" selection-end-line="136" selection-end-column="28" />
                   <folding>
                     <element signature="imports" expanded="true" />
+                    <element signature="method#turnOffAllLights#0;class#midimixExtension#0" expanded="false" />
+                    <element signature="method#fixAllLights#0;class#midimixExtension#0" expanded="false" />
                     <element signature="method#onSysex0#0;class#midimixExtension#0" expanded="false" />
                     <element signature="method#flush#0;class#midimixExtension#0" expanded="false" />
                   </folding>
@@ -59,7 +61,7 @@
           <file leaf-file-name="midimixExtension.java" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/main/java/com/akai/midimixExtension.java">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1552">
+                <state relative-caret-position="2509">
                   <caret line="258" column="0" lean-forward="true" selection-start-line="258" selection-start-column="0" selection-end-line="258" selection-end-column="0" />
                   <folding>
                     <element signature="imports" expanded="true" />
@@ -614,7 +616,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="2576" height="1456" extended-state="6" />
+    <frame x="-8" y="-8" width="2576" height="1456" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -671,10 +673,8 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="docComment;method#onMidi0#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#ControllerFunction#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#MidiId#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#xy#0;class#midimixExtension#0" expanded="false" />
+            <element signature="method#turnOffAllLights#0;class#midimixExtension#0" expanded="false" />
+            <element signature="method#fixAllLights#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#onSysex0#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#flush#0;class#midimixExtension#0" expanded="false" />
           </folding>
@@ -723,14 +723,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/akai/midimixExtension.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1552">
-          <caret line="258" column="0" lean-forward="true" selection-start-line="258" selection-start-column="0" selection-end-line="258" selection-end-column="0" />
+        <state relative-caret-position="1668">
+          <caret line="136" column="28" lean-forward="false" selection-start-line="136" selection-start-column="28" selection-end-line="136" selection-end-column="28" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="docComment;method#onMidi0#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#ControllerFunction#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#MidiId#0;class#midimixExtension#0" expanded="false" />
-            <element signature="class#xy#0;class#midimixExtension#0" expanded="false" />
+            <element signature="method#turnOffAllLights#0;class#midimixExtension#0" expanded="false" />
+            <element signature="method#fixAllLights#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#onSysex0#0;class#midimixExtension#0" expanded="false" />
             <element signature="method#flush#0;class#midimixExtension#0" expanded="false" />
           </folding>
