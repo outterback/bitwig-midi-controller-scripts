@@ -1,86 +1,178 @@
 package com.akai;
 
 import com.bitwig.extension.api.util.midi.ShortMidiMessage;
-import com.bitwig.extension.controller.api.ControllerHost;
-import com.bitwig.extension.controller.api.Track;
-import com.bitwig.extension.controller.api.TrackBank;
+import com.bitwig.extension.callback.StringValueChangedCallback;
+import com.bitwig.extension.controller.api.*;
 
-/**
- * Created by Oscar on 10/18/2017.
- */
-public class MidiMixController {
+class MidiMixController {
 
-    /*  This is the first data byte sent from each knob/fader/button on the akai
- *  Bank left, bank right, solo and master are in the last, shorter row.
- *
- *  Start from upper left corner of the midimix
- *  Solo is a hold button, mute and solo are folded out into two rows (
- *  (0,0) is send A track 2, (0,7) is send A track 8, (6, 3) is fader track 4 e.t.c.
- *
- */
-    private static final int[][] midiKeys2d =
-        {{16, 20, 24, 28, 46, 50, 54, 58},   // 0  cc        send a
-            {17, 21, 25, 29, 47, 51, 55, 59},   // 1  cc        send b
-            {18, 22, 26, 30, 48, 52, 56, 60},   // 2  cc        pan
-            {1, 4, 7, 10, 13, 16, 19, 22},   // 3  note      mute
-            {2, 5, 8, 11, 14, 17, 20, 23},   // 4  note      solo + mute
-            {3, 6, 9, 12, 15, 18, 21, 24},   // 5  note      rec
-            {19, 23, 27, 31, 49, 53, 57, 61},   // 6  cc        fader
-            {25, 26, 27, 62}};                  // 7  note      bank left, bank right, solo, master
+    private interface ControllerFunction {
+        void op(ShortMidiMessage msg);
+    }
+
+    boolean showPopup = false;
+
+    private static final int NUM_TRACKS = 8;
+    private static final int NUM_SENDS = 2;
+    private static final int NUM_SCENES = 0;
 
     /* These objects represent remote controls in bitwig
-     * Transport controls playhead position, play, pause etc
-     * Trackbank holds references to control mixer channels in bitwig
-     */
-
+    * Transport controls playhead position, play, pause etc
+    * Trackbank holds references to control mixer channels in bitwig
+    */
     private final ControllerHost host;
     private final TrackBank trackBank;
+    private MasterTrack masterTrack;
+    private final ControllerFunction[][] functionMatrix;
 
-    MidiMixController(ControllerHost host, TrackBank trackBank) {
+    MidiMixController(ControllerHost host) {
         this.host = host;
         this.trackBank = host.createTrackBank(8, 2, 0);
         for (int i = 0; i < 8; i++) {
             this.trackBank.getChannel(i).name().markInterested();
         }
-        //this.trackBank = trackBank;
+        this.functionMatrix = new ControllerFunction[8][8];
+        initBitwigControls();
+        // TODO: deviceBanks = new DeviceBank[NUM_TRACKS];
     }
 
-    void getName(int channel) {
-        host.println("channel: "+ channel +" name: \"" + this.trackBank.getChannel(channel).name().get() + "\"");
+    void printMessage(ShortMidiMessage msg) {
+        host.println("midiMessage status: " + msg.getStatusByte()
+            + " data1: " + msg.getData1() + " data2: " + msg.getData2() + " channel: " + msg.getChannel());
     }
 
-    void scrollChannelsDown(ShortMidiMessage msg) {
-        host.println("data1 = " + msg.getData1());
-        if (msg.getStatusByte() == ShortMidiMessage.NOTE_ON) {
-            host.println("down on");
-            trackBank.scrollChannelsDown();
-        } else if (msg.getStatusByte() == ShortMidiMessage.NOTE_OFF) {
-            flushLights();
-            host.println("down off");
+    void handleMidiMessage(ShortMidiMessage msg) {
+        //host.println("handleMidiMessage");
+        //printMessage(msg);
+        callFunction(msg);
+    }
+
+    void callFunction(ShortMidiMessage msg) {
+        Coord c = MidiMixMapping.getCoordFromMidi(msg);
+        if (c == null) {
+            return;
         }
+        ControllerFunction cf = functionMatrix[c.x][c.y];
+        if (cf == null) {
+            // host.println("cf == null");
+        }
+        cf.op(msg);
+    }
+
+    private void initBitwigControls() {
+        setFcnAtCoords(Row.EXTRA, 0, this::scrollChannelsUp);
+        setFcnAtCoords(Row.EXTRA, 1, this::scrollChannelsDown);
+
+        trackBank.channelCount().markInterested();
+
+        masterTrack = host.createMasterTrack(0);
+        masterTrack.name().addValueObserver(new StringValueChangedCallback() {
+            @Override
+            public void valueChanged(String s) {
+
+            }
+        });
+        masterTrack.getVolume().markInterested();
+        trackBank.getChannel(0).name().addValueObserver(new StringValueChangedCallback() {
+            @Override
+            public void valueChanged(String s) {
+                host.showPopupNotification("Midimix track 1: " + s);
+            }
+        });
+        setFcnAtCoords(Row.EXTRA, 3, (msg) -> masterTrack.getVolume().set(intValTo01(msg.getData2())));
+
+        for (int y = 0; y < NUM_TRACKS; y++) {  // I ❤ λ's
+            final int channel = y;
+            final Track track = trackBank.getChannel(channel);
+            setFcnAtCoords(Row.SEND_A, y, (msg) -> setSend(channel, 0, msg));
+            setFcnAtCoords(Row.SEND_B, y, (msg) -> setSend(channel, 1, msg));
+            setFcnAtCoords(Row.PAN, y, (msg) -> setPan(channel, msg));
+            setFcnAtCoords(Row.MUTE, y, (msg) -> toggleMute(channel, msg));
+            setFcnAtCoords(Row.SOLO, y, (msg) -> toggleSolo(channel, msg));
+            setFcnAtCoords(Row.ARM, y, (msg) -> toggleRec(channel, msg));
+            setFcnAtCoords(Row.FADER, y, (msg) -> setVolume(channel, msg));
+
+
+            /* to be able to read parameters in bitwig, we need to either
+             * a) call getmute().markinterested()  or
+             * b) add a value observer via mtrackbank.getchannel(i).getmute().addvalueobserver(...)
+             * or else we will be blocked from using getmute().get().
+             */
+            track.getMute().markInterested();
+            track.getSolo().markInterested();
+            track.getArm().markInterested();
+            track.name().markInterested();
+            track.isGroup().markInterested();
+        }
+
     }
 
 
-    void scrollChannelsUp(ShortMidiMessage msg) {
-        host.println("data1 = " + msg.getData1());
-        if (msg.getStatusByte() == ShortMidiMessage.NOTE_ON) {
-            host.println("up on");
-            trackBank.scrollChannelsUp();
-        } else if (msg.getStatusByte() == ShortMidiMessage.NOTE_OFF) {
-            host.println("up off");
-            flushLights();
+    private void setFcnAtCoords(int x, int y, ControllerFunction f) {
+        if (x < 0 || x > 7 || y < 0 || y > 7) {
+            host.println("Error setFcnAtCoords x: " + x + " y: " + y);
         }
+        functionMatrix[x][y] = f;
+    }
 
+    private ControllerFunction getFcnFromMidi(ShortMidiMessage msg) {
+        Coord c = MidiMixMapping.getCoordFromMidi(msg);
+        if (null == c) {
+            //host.println("c is null" + msg.getStatusByte() + " " + msg.getData1());
+            return null;
+        }
+        return functionMatrix[c.x][c.y];
+
+    }
+
+    private double intValTo01(int value) {
+        return value / 127.0;
+    }
+
+    private void setSend(int channel, int send, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).sendBank().getItemAt(send).value().set(intValTo01(msg.getData2()));
+    }
+
+    private void setVolume(int channel, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).getVolume().value().set(intValTo01(msg.getData2()));
+    }
+
+    private void setPan(int channel, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).getPan().value().set(intValTo01(msg.getData2()));
+    }
+
+    private void toggleMute(int channel, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).getMute().toggle();
+    }
+
+    private void toggleRec(int channel, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).getArm().toggle();
+    }
+
+    private void toggleSolo(int channel, ShortMidiMessage msg) {
+        trackBank.getChannel(channel).getSolo().toggle();
+
+    }
+
+    private void scrollChannelsDown(ShortMidiMessage msg) {
+        trackBank.scrollChannelsDown();
+    }
+
+
+    private void scrollChannelsUp(ShortMidiMessage msg) {
+        trackBank.scrollChannelsUp();
     }
 
 
     void turnAllLightsOff() {
-        host.println("Turning off all lights");
         int velocity = 0;
         for (int channel = 0; channel < 8; ++channel) {
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.MUTE][channel], velocity);
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.SOLO][channel], velocity);
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.ARM][channel], velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.MUTE, channel), velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.SOLO, channel), velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.ARM, channel), velocity);
         }
     }
 
@@ -89,27 +181,28 @@ public class MidiMixController {
      *
      */
     void flushLights() {
-        host.println("Fixing Lights");
         for (int channel = 0; channel < 8; ++channel) {
             int velocity = 0;
             final Track track = trackBank.getChannel(channel);
-            host.println("channel: " + channel + " mute: " + track.getMute().get() + " solo: " + track.getSolo().get() + " arm: " + track.getArm().get());
             if (!track.getMute().get()) {
                 velocity = 127;
             }
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.MUTE][channel], velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.MUTE, channel), velocity);
 
             velocity = 0;
             if (track.getSolo().get()) {
                 velocity = 127;
             }
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.SOLO][channel], velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.SOLO, channel), velocity);
 
             velocity = 0;
             if (track.getArm().get()) {
                 velocity = 127;
             }
-            host.getMidiOutPort(0).sendMidi(144, midiKeys2d[Row.ARM][channel], velocity);
+            host.getMidiOutPort(0)
+                .sendMidi(144, MidiMixMapping.getData1(Row.ARM, channel), velocity);
 
 
         }
