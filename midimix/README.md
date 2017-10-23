@@ -20,7 +20,8 @@ The Send All button transmits all settings from the controller as if each contro
 
 The script maps all tracks: Instruments, groups, audio, sends and master.
 
-A popup notification is displayed when the Bank Left and Right buttons are pressed, indicating which track corresponds to the first channel on the controller.
+A popup notification is displayed when the Bank Left and Right buttons are pressed, indicating  which track corresponds to the first channel on the controller.
+
  
  ## Bugs
  * The group master of a track group ends up as the last track of the group on the Midimix. It should probably be the first.
