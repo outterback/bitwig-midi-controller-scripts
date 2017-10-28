@@ -9,7 +9,7 @@ import com.bitwig.extension.controller.api.Preferences;
 public class midimixExtension extends ControllerExtension {
 
     private MidiMixController mMidiMixController;
-
+    private MultiDeviceController mMultiDeviceController;
     protected midimixExtension(final midimixExtensionDefinition definition, final ControllerHost host) {
         super(definition, host);
     }
@@ -22,6 +22,7 @@ public class midimixExtension extends ControllerExtension {
         Preferences p = host.getPreferences();
 
         mMidiMixController = new MidiMixController(host);
+        mMultiDeviceController = new MultiDeviceController(host);
         MidiMixMapping.init();
         MidiMixMapping.host = host;
 
@@ -37,7 +38,8 @@ public class midimixExtension extends ControllerExtension {
      * Called when we receive short MIDI message on port 0.
      */
     private void onMidi0(ShortMidiMessage msg) {
-        mMidiMixController.handleMidiMessage(msg);
+        //mMidiMixController.handleMidiMessage(msg);
+        mMultiDeviceController.handleMidiMessage(msg);
     }
 
 
@@ -59,7 +61,10 @@ public class midimixExtension extends ControllerExtension {
 
     @Override
     public void flush() {
-        mMidiMixController.flushLights();
+
+
+        //mMultiDeviceController.flushLights();
+        mMultiDeviceController.doPrint();
         // TODO Send any updates you need here.
     }
 

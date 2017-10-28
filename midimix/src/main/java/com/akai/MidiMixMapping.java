@@ -56,10 +56,6 @@ public final class MidiMixMapping {
 
 
     static void init() {
-        if (null == mMidiValToMatrixIndex) {
-            return;
-        }
-
         /*
          * This registers where in the map to look for a function
          */
