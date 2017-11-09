@@ -18,7 +18,6 @@ public class midimixExtension extends ControllerExtension {
     @Override
     public void init() {
         final ControllerHost host = getHost();
-        host.println("hello ");
         Preferences p = host.getPreferences();
 
         mMidiMixController = new MidiMixController(host);

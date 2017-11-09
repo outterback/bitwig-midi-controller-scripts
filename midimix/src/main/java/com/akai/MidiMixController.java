@@ -33,7 +33,6 @@ class MidiMixController {
         }
         this.functionMatrix = new ControllerFunction[8][8];
         initBitwigControls();
-        // TODO: deviceBanks = new DeviceBank[NUM_TRACKS];
     }
 
     void printMessage(ShortMidiMessage msg) {
@@ -42,20 +41,15 @@ class MidiMixController {
     }
 
     void handleMidiMessage(ShortMidiMessage msg) {
-        //host.println("handleMidiMessage");
-        //printMessage(msg);
         callFunction(msg);
     }
 
-    void callFunction(ShortMidiMessage msg) {
+    private void callFunction(ShortMidiMessage msg) {
         Coord c = MidiMixMapping.getCoordFromMidi(msg);
         if (c == null) {
             return;
         }
         ControllerFunction cf = functionMatrix[c.x][c.y];
-        if (cf == null) {
-            // host.println("cf == null");
-        }
         cf.op(msg);
     }
 
@@ -66,19 +60,10 @@ class MidiMixController {
         trackBank.channelCount().markInterested();
 
         masterTrack = host.createMasterTrack(0);
-        masterTrack.name().addValueObserver(new StringValueChangedCallback() {
-            @Override
-            public void valueChanged(String s) {
-
-            }
+        masterTrack.name().addValueObserver(s -> {
         });
         masterTrack.getVolume().markInterested();
-        trackBank.getChannel(0).name().addValueObserver(new StringValueChangedCallback() {
-            @Override
-            public void valueChanged(String s) {
-                host.showPopupNotification("Midimix track 1: " + s);
-            }
-        });
+        trackBank.getChannel(0).name().addValueObserver(s -> host.showPopupNotification("Midimix track 1: " + s));
         setFcnAtCoords(Row.EXTRA, 3, (msg) -> masterTrack.getVolume().set(intValTo01(msg.getData2())));
 
         for (int y = 0; y < NUM_TRACKS; y++) {  // I ❤ λ's

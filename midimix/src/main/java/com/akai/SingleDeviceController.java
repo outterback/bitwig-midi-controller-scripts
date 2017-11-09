@@ -5,35 +5,44 @@ import com.bitwig.extension.controller.api.*;
 
 import java.util.ArrayList;
 
-public class SingleDeviceController {
+class SingleDeviceController {
 
-    TrackBank trackBank;
-    DeviceBank deviceBank;
-    CursorRemoteControlsPage remoteControlsPage;
-    ControllerHost host;
+    private TrackBank trackBank;
+    private DeviceBank deviceBank;
+    private CursorRemoteControlsPage remoteControlsPage;
+    private ControllerHost host;
+    private String name;
 
-    public SingleDeviceController(ControllerHost host) {
+    SingleDeviceController(ControllerHost host, String name) {
         this.host = host;
+        this.name = name;
         trackBank = host.createTrackBank(1, 0, 0);
         trackBank.getChannel(0).name().markInterested();
+        trackBank.getChannel(0).name().addValueObserver(s -> host.showPopupNotification(String.format(
+                "%s", getControllerInfoString()
+        )));
         deviceBank = trackBank.getChannel(0).createDeviceBank(1);
         remoteControlsPage = deviceBank.getDevice(0).createCursorRemoteControlsPage(8);
         for (int j = 0; j < 8; j++) {
+
             remoteControlsPage.getParameter(j).name().markInterested();
             remoteControlsPage.getParameter(j).value().markInterested();
         }
-
+        remoteControlsPage.pageNames().markInterested();
+        remoteControlsPage.selectedPageIndex().addValueObserver(i -> host.showPopupNotification(String.format(
+                "%s", getControllerInfoString()
+        )));
         Device d = deviceBank.getDevice(0);
         d.name().markInterested();
         d.position().markInterested();
     }
 
+    private String getControllerInfoString() {
+        return String.format("%8s     %8s    %16s     %16s", name, getTrackName(), getDeviceName(), getParamPageName());
+    }
+
     void moveParameter(int parameterId, ShortMidiMessage msg) {
         double newVal = msg.getData2() / 127.0f;
-
-        String s = String.format("%10s %10s %10s %3.2f %3.2f", getTrackName(), getDeviceName(), getParameterNames()[parameterId], getParameterValues()[parameterId], newVal);
-        host.println("new val: " + newVal);
-        host.println(s);
         remoteControlsPage.getParameter(parameterId).set(newVal);
     }
 
@@ -42,6 +51,7 @@ public class SingleDeviceController {
     }
 
     void prevTrack() { // scrolls to the left
+
         trackBank.scrollChannelsUp();
     }
 
@@ -67,8 +77,14 @@ public class SingleDeviceController {
     String getDeviceName() {
         return deviceBank.getDevice(0).name().get();
     }
-    String getParamPageName() {
-        return remoteControlsPage.pageNames().get(remoteControlsPage.selectedPageIndex().get());
+    private String getParamPageName() {
+        String pageName = "";
+        try {
+            pageName = remoteControlsPage.pageNames().get(remoteControlsPage.selectedPageIndex().get());
+        } catch (Exception ignored) {
+        }
+
+        return pageName;
     }
 
     String[] getParameterNames() {
