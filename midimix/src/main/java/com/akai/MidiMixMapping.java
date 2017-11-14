@@ -28,6 +28,11 @@ public final class MidiMixMapping {
             {19, 23, 27, 31, 49, 53, 57, 61},   // 6  cc        fader
             {25, 26, 27, 62}};                  // 7  note      bank left, bank right, solo, master
 
+
+    static final int BANK_LEFT = 25;
+    static final int BANK_RIGHT = 26;
+    static final int SOLO = 27;
+
     private static final HashMap<ComparableMidiMessage, Coord> mMidiValToMatrixIndex = new HashMap<>();
 
     static int getData1(int x, int y) {

@@ -10,6 +10,17 @@ public class midimixExtension extends ControllerExtension {
 
     private MidiMixController mMidiMixController;
     private MultiDeviceController mMultiDeviceController;
+    private boolean isSoloHeld = false;
+    private MidiMessageHandler mActiveController;
+
+    public interface MidiMessageHandler {
+        void handleMidiMessage(ShortMidiMessage msg);
+
+        void flushLights();
+
+        void doPrint();
+    }
+
     protected midimixExtension(final midimixExtensionDefinition definition, final ControllerHost host) {
         super(definition, host);
     }
@@ -18,10 +29,10 @@ public class midimixExtension extends ControllerExtension {
     @Override
     public void init() {
         final ControllerHost host = getHost();
-        Preferences p = host.getPreferences();
 
         mMidiMixController = new MidiMixController(host);
         mMultiDeviceController = new MultiDeviceController(host);
+        mActiveController = mMidiMixController;
         MidiMixMapping.init();
         MidiMixMapping.host = host;
 
@@ -37,11 +48,33 @@ public class midimixExtension extends ControllerExtension {
      * Called when we receive short MIDI message on port 0.
      */
     private void onMidi0(ShortMidiMessage msg) {
-        //mMidiMixController.handleMidiMessage(msg);
-        mMultiDeviceController.handleMidiMessage(msg);
+        if (msg.getData1() == MidiMixMapping.SOLO) {
+            if (msg.isNoteOn()) {
+                isSoloHeld = true;
+            } else if (msg.isNoteOff()) {
+                isSoloHeld = false;
+            }
+        }
+
+        if (isSoloHeld) {
+            switch (msg.getData1()) {
+                case MidiMixMapping.BANK_LEFT:
+                    mActiveController = mMidiMixController;
+                    getHost().showPopupNotification("Mixer mode");
+                    break;
+                case MidiMixMapping.BANK_RIGHT:
+                    mActiveController = mMultiDeviceController;
+                    getHost().showPopupNotification("Multi-device mode");
+                    break;
+            }
+        }
+        mActiveController.handleMidiMessage(msg);
     }
 
-
+    void printMessage(ShortMidiMessage msg) {
+        getHost().println("midiMessage status: " + msg.getStatusByte()
+                + " data1: " + msg.getData1() + " data2: " + msg.getData2() + " channel: " + msg.getChannel());
+    }
 
     /**
      * Called when we receive sysex MIDI message on port 0.
@@ -52,8 +85,6 @@ public class midimixExtension extends ControllerExtension {
 
     @Override
     public void exit() {
-        // TODO: Perform any cleanup once the driver exits
-        // For now just show a popup notification for verification that it is no longer running.
         mMidiMixController.turnAllLightsOff();
         getHost().showPopupNotification("midimix Exited");
     }
@@ -61,10 +92,8 @@ public class midimixExtension extends ControllerExtension {
     @Override
     public void flush() {
 
-
-        //mMultiDeviceController.flushLights();
-        mMultiDeviceController.doPrint();
-        // TODO Send any updates you need here.
+        mActiveController.flushLights();
+        mActiveController.doPrint();
     }
 
 }

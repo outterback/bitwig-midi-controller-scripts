@@ -8,7 +8,7 @@ import com.bitwig.extension.controller.api.ControllerHost;
 
 public class midimixExtensionDefinition extends ControllerExtensionDefinition
 {
-   private static final UUID DRIVER_ID = UUID.fromString("380ccb5b-4acf-42fe-ab3d-b2f9c742e020");
+   private static final UUID DRIVER_ID = UUID.fromString("6dada724-6c08-4515-b72a-f13e1e00e1ab");
    
    public midimixExtensionDefinition()
    {

@@ -6,12 +6,11 @@ import com.bitwig.extension.controller.api.*;
 
 import static com.akai.MidiMixMapping.getCoordFromMidi;
 
-class MultiDeviceController {
-
+class MultiDeviceController implements midimixExtension.MidiMessageHandler {
 
     private SettableBooleanValue shouldIPrint;
 
-    void doPrint() {
+    public void doPrint() {
         if (!shouldIPrint.get()) {
             return;
         }
@@ -34,11 +33,15 @@ class MultiDeviceController {
         }
     }
 
+
+    @Override
+    public void flushLights() {
+        turnAllLightsOff();
+    }
+
     private interface ControllerFunction {
         void op(ShortMidiMessage msg);
     }
-
-    boolean showPopup = false;
 
     private static final int NUM_DEVICE_CONTROLLERS = 4;
     private static final int NUM_PARAMETERS_PER_CONTROLLER = 8;
@@ -53,9 +56,6 @@ class MultiDeviceController {
     private final SingleDeviceController[] controllers;
 
     MultiDeviceController(ControllerHost host) {
-
-
-
         shouldIPrint = new SettableBooleanValue() {
 
             private boolean state = false;
@@ -131,8 +131,8 @@ class MultiDeviceController {
             final int controllerId = i;
             for (int j = 0; j < NUM_PARAMETERS_PER_CONTROLLER; j++) {
                 final int parameterId = j;
-                ComparableMidiMessage compMidiMsg = new ComparableMidiMessage(ShortMidiMessage.CONTROL_CHANGE, deviceCCMap[i][j], 0);
-                Coord c = MidiMixMapping.getCoordFromMidi(compMidiMsg);
+                final ComparableMidiMessage compMidiMsg = new ComparableMidiMessage(ShortMidiMessage.CONTROL_CHANGE, deviceCCMap[i][j], 0);
+                final Coord c = MidiMixMapping.getCoordFromMidi(compMidiMsg);
                 functionMatrix[c.x][c.y] = (msg) -> controllers[controllerId].moveParameter(parameterId, msg);
             }
 
@@ -150,12 +150,8 @@ class MultiDeviceController {
         }
     }
 
-    void printMessage(ShortMidiMessage msg) {
-        host.println("midiMessage status: " + msg.getStatusByte()
-                + " data1: " + msg.getData1() + " data2: " + msg.getData2() + " channel: " + msg.getChannel());
-    }
-
-    void handleMidiMessage(ShortMidiMessage msg) {
+    @Override
+    public void handleMidiMessage(ShortMidiMessage msg) {
         if (msg.isNoteOn()) {
             switch (msg.getData1()) {
                 case 25:
@@ -167,7 +163,7 @@ class MultiDeviceController {
     }
 
     private void callFunction(ShortMidiMessage msg) {
-        Coord c = getCoordFromMidi(msg);
+        final Coord c = getCoordFromMidi(msg);
         if (c == null) {
             return;
         }
@@ -177,22 +173,7 @@ class MultiDeviceController {
         }
     }
 
-
-    private ControllerFunction getFcnFromMidi(ShortMidiMessage msg) {
-        Coord c = getCoordFromMidi(msg);
-        if (null == c) {
-            return null;
-        }
-        return functionMatrix[c.x][c.y];
-
-    }
-
-    private double intValTo01(int value) {
-        return value / 127.0;
-    }
-
-
-    void turnAllLightsOff() {
+    private void turnAllLightsOff() {
         int velocity = 0;
         for (int channel = 0; channel < 8; ++channel) {
             host.getMidiOutPort(0)

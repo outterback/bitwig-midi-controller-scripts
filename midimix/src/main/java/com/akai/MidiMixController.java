@@ -1,16 +1,16 @@
 package com.akai;
 
 import com.bitwig.extension.api.util.midi.ShortMidiMessage;
-import com.bitwig.extension.callback.StringValueChangedCallback;
-import com.bitwig.extension.controller.api.*;
+import com.bitwig.extension.controller.api.ControllerHost;
+import com.bitwig.extension.controller.api.MasterTrack;
+import com.bitwig.extension.controller.api.Track;
+import com.bitwig.extension.controller.api.TrackBank;
 
-class MidiMixController {
+class MidiMixController implements midimixExtension.MidiMessageHandler {
 
     private interface ControllerFunction {
         void op(ShortMidiMessage msg);
     }
-
-    boolean showPopup = false;
 
     private static final int NUM_TRACKS = 8;
     private static final int NUM_SENDS = 2;
@@ -27,7 +27,10 @@ class MidiMixController {
 
     MidiMixController(ControllerHost host) {
         this.host = host;
-        this.trackBank = host.createTrackBank(8, 2, 0);
+        this.trackBank = host.createMainTrackBank(NUM_TRACKS, NUM_SENDS, NUM_SCENES);
+        host.println("numTracks = " + trackBank.getSizeOfBank());
+        //host.addDeviceNameBasedDiscoveryPair(new String[]{"MIDI Mix"}, new String[]{"MIDI Mix"});
+
         for (int i = 0; i < 8; i++) {
             this.trackBank.getChannel(i).name().markInterested();
         }
@@ -35,12 +38,10 @@ class MidiMixController {
         initBitwigControls();
     }
 
-    void printMessage(ShortMidiMessage msg) {
-        host.println("midiMessage status: " + msg.getStatusByte()
-            + " data1: " + msg.getData1() + " data2: " + msg.getData2() + " channel: " + msg.getChannel());
-    }
 
-    void handleMidiMessage(ShortMidiMessage msg) {
+    @Override
+    public void handleMidiMessage(ShortMidiMessage msg) {
+        host.println("trackbank size = " + trackBank.getSizeOfBank());
         callFunction(msg);
     }
 
@@ -54,6 +55,8 @@ class MidiMixController {
     }
 
     private void initBitwigControls() {
+
+        // Second parameter, 0 and 1, are the second (column) index in MidiMixMapping.midiMixData1Map
         setFcnAtCoords(Row.EXTRA, 0, this::scrollChannelsUp);
         setFcnAtCoords(Row.EXTRA, 1, this::scrollChannelsDown);
 
@@ -64,6 +67,8 @@ class MidiMixController {
         });
         masterTrack.getVolume().markInterested();
         trackBank.getChannel(0).name().addValueObserver(s -> host.showPopupNotification("Midimix track 1: " + s));
+
+        // As 0 and 1 above
         setFcnAtCoords(Row.EXTRA, 3, (msg) -> masterTrack.getVolume().set(intValTo01(msg.getData2())));
 
         for (int y = 0; y < NUM_TRACKS; y++) {  // I ❤ λ's
@@ -101,9 +106,8 @@ class MidiMixController {
     }
 
     private ControllerFunction getFcnFromMidi(ShortMidiMessage msg) {
-        Coord c = MidiMixMapping.getCoordFromMidi(msg);
+        final Coord c = MidiMixMapping.getCoordFromMidi(msg);
         if (null == c) {
-            //host.println("c is null" + msg.getStatusByte() + " " + msg.getData1());
             return null;
         }
         return functionMatrix[c.x][c.y];
@@ -127,6 +131,7 @@ class MidiMixController {
     }
 
     private void toggleMute(int channel, ShortMidiMessage msg) {
+        host.println("toggelMute: " + channel);
         trackBank.getChannel(channel).getMute().toggle();
     }
 
@@ -166,7 +171,8 @@ class MidiMixController {
     /**
      *
      */
-    void flushLights() {
+    @Override
+    public void flushLights() {
         for (int channel = 0; channel < 8; ++channel) {
             int velocity = 0;
             final Track track = trackBank.getChannel(channel);
@@ -192,5 +198,10 @@ class MidiMixController {
 
 
         }
+    }
+
+    @Override
+    public void doPrint() {
+
     }
 }
