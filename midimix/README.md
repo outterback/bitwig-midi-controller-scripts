@@ -27,14 +27,21 @@ The Send All button transmits all settings from the controller as if each contro
 
 Due to a bug/feature in how Bitwig's TrackBank works, the controller will only map to main tracks, i.e. no send or master tracks.
 
-A popup notification is displayed when the Bank Left and Right buttons are pressed, indicating  which track corresponds to the first channel on the controller.
+A popup notification is displayed when the Bank Left and Right buttons are pressed, indicating  which track corresponds to the first channel on the controller. The channels are numbered 1 through 8 from left to right. 
 
  
  ### Multi device controller
- This mode divides the controller into 4 separate controllers that each map 8 controllers to the macro knobs on a selected device. This lets the user control four different devices at the same time. 
+ The multi device mode divides the midimix into four separate controllers. Two columns on the midimix map to a single device controller as described in the image below. The buttons for each device controller navigates between tracks, devices and parameter pages, and the chosen parameter page automatically maps to the 8 parameters of the active parameter page. When the user changes track, device, or parameter page, a popup will display info about the chosen controller.
+ 
+ The controllers are labelled 1 through 4 from left to right. The left hand buttons on each controller selects the previous track, device or parameter page, while the right hand selects the next.
+ 
+ The master fader is not in use in this mode. Map it to something fun manually.
+  
+ 
+ ![](./images/multi_device.png)
+ 
+ Thanks to [Adam Näslund](https://github.com/kattfisk) for the image.
  
  ## Bugs of the known kind
- * (Mixer mode) Group tracks are mapped twice in the track bank, the first and the last.
- * (Mixer mode) The group master of a track group ends up as the last track of the group on the Midimix. It should probably be the first.
  * If you have less than 8 tracks, the master track will take up one of the channel slots, effectively giving you two volume faders but also solo and pan control of the master track. I probably won't fix this.
 
