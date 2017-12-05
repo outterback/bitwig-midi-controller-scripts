@@ -6,7 +6,7 @@ Install the script by copying [midimix.bwextension](./target/midimix.bwextension
 The script is configured according to the following controller map.
 ![](./images/controller_map.png)
 
-You can find the midimix editor software [here](http://www.akaipro.com/products/recording/midimix).
+You can find the midimix editor software [here](http://www.akaipro.com/products/recording/midimix) in case you need to check or change your controller settings. 
 
 Add your controller manually in bitwig:
 
@@ -42,6 +42,4 @@ A popup notification is displayed when the Bank Left and Right buttons are press
  
  Thanks to [Adam Näslund](https://github.com/kattfisk) for the image.
  
- ## Bugs of the known kind
- * If you have less than 8 tracks, the master track will take up one of the channel slots, effectively giving you two volume faders but also solo and pan control of the master track. I probably won't fix this.
 
